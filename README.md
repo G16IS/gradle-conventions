@@ -70,9 +70,20 @@ Detekt: si el consumidor tiene `${rootDir}/config/detekt/detekt.yml`, se usa com
 
 Git hooks: este repo es la fuente (`hooks/pre-commit`, `hooks/post-commit`). Van en el jar del plugin. En el consumidor, `./gradlew installGitHooks` los escribe en `hooks/` y configura `core.hooksPath`. El consumidor no versiona esos scripts.
 
-## Cómo publicar este paquete
+## Continuous delivery
 
-Hace falta `GITHUB_ACTOR` y `GITHUB_TOKEN` con `write:packages` (y acceso a la org `G16IS`). El repo GitHub `G16IS/gradle-conventions` tiene que existir.
+Mismo esquema que PrintScript. `GITHUB_TOKEN` del workflow tiene `packages: write` sobre **este** repo, así que Actions puede publicar a `https://maven.pkg.github.com/G16IS/gradle-conventions`.
+
+| Workflow | Cuándo | Qué hace |
+|---|---|---|
+| `Version Tag` (`.github/workflows/version.yml`) | push a `main` | Tag semver y llama a Publish. Sin tags → `v1.0.0`. Merge de PR → bump **minor**. Push directo → bump **patch**. |
+| `Publish` (`.github/workflows/publish.yml`) | `workflow_call` / GitHub Release / `workflow_dispatch` | `./gradlew publish -Pversion=X.Y.Z` (el tag sin el prefijo `v`) |
+
+Major: crear un GitHub Release con tag `vX.0.0`. Republicar: Actions → Publish → `workflow_dispatch` con el tag.
+
+## Cómo publicar a mano
+
+Hace falta `GITHUB_ACTOR` y un PAT classic con `write:packages` (y `repo` si el repo es privado). El repo GitHub `G16IS/gradle-conventions` tiene que existir. El token OAuth de `gh` (`gho_`) no autentica Maven Packages.
 
 ```bash
 export GITHUB_ACTOR=tu-usuario
