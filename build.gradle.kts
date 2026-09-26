@@ -1,0 +1,43 @@
+plugins {
+    `kotlin-dsl`
+    `maven-publish`
+}
+
+group = "com.g16is.conventions"
+version = (findProperty("version") as String?).takeUnless { it.isNullOrBlank() || it == "unspecified" }
+    ?: "0.0.0-SNAPSHOT"
+
+repositories {
+    gradlePluginPortal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.10")
+    implementation("org.jlleitschuh.gradle.ktlint:org.jlleitschuh.gradle.ktlint.gradle.plugin:14.2.0")
+    implementation("dev.detekt:dev.detekt.gradle.plugin:2.0.0-alpha.6")
+    implementation("org.jetbrains.kotlinx:kover-gradle-plugin:0.9.9")
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+tasks.processResources {
+    from("hooks") {
+        into("hooks")
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/G16IS/gradle-conventions")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
