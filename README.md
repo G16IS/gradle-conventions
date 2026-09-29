@@ -16,7 +16,7 @@ Repositorio Maven: `https://maven.pkg.github.com/G16IS/gradle-conventions`
 
 ## Cómo aplicar (consumidor)
 
-GitHub Packages pide token también para bajar. En CI: `GITHUB_ACTOR` + `GITHUB_TOKEN` con `packages: read`. En local: las mismas env vars, o `gpr.user` / `gpr.key` en `gradle.properties` (no commitear el token).
+GitHub Packages pide token también para bajar. En local, igual que el TCK: `gpr.user` / `gpr.key` en `gradle.properties` (gitignored). En CI: `USERNAME`/`TOKEN` o `GITHUB_ACTOR`/`GITHUB_TOKEN` con `packages: read`.
 
 `settings.gradle.kts` — `pluginManagement` primero:
 

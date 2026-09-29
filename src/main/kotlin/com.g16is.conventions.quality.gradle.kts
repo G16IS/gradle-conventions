@@ -42,10 +42,12 @@ if (project != rootProject) {
 }
 
 if (project == rootProject) {
-    tasks.register<InstallGitHooks>("installGitHooks") {
-        group = "build setup"
-        description = "Installs the repository git hooks if they are not already installed."
-        repoDirectory.convention(layout.projectDirectory)
-        hooksDirectoryName.convention("hooks")
+    if (project == rootProject) {
+        tasks.register<InstallGitHooks>("installGitHooks") {
+            group = "build setup"
+            description = "Installs the repository git hooks if they are not already installed."
+            repoDirectory.convention(layout.projectDirectory)
+            hookNames.convention(listOf("pre-commit", "post-commit"))
+        }
     }
 }
