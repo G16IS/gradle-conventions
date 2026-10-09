@@ -8,11 +8,13 @@ import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
 abstract class CoverageReportTask : DefaultTask() {
-
     @get:Input
     abstract val moduleReports: MapProperty<String, String> // módulo -> ruta absoluta a report.xml
 
-    private data class Metric(val covered: Int, val missed: Int) {
+    private data class Metric(
+        val covered: Int,
+        val missed: Int,
+    ) {
         val total get() = covered + missed
         val pct get() = if (total == 0) 0.0 else covered.toDouble() / total * 100
     }
@@ -68,10 +70,14 @@ abstract class CoverageReportTask : DefaultTask() {
     }
 
     private fun printTable(results: List<ModuleCoverage>) {
-        val header = String.format(
-            "%-16s %10s %10s %10s",
-            "Módulo", "Línea", "Método", "Branch",
-        )
+        val header =
+            String.format(
+                "%-16s %10s %10s %10s",
+                "Módulo",
+                "Línea",
+                "Método",
+                "Branch",
+            )
         val separator = "─".repeat(header.length)
 
         println()

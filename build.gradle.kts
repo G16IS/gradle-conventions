@@ -1,6 +1,22 @@
+import dev.detekt.gradle.extensions.DetektExtension
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
+
 plugins {
     `kotlin-dsl`
     `maven-publish`
+    // El quality publicado (1.0.2) no aplica ktlint/detekt en el root, y este
+    // repo no puede aplicarse su propio plugin sin publicarlo. Sin estas tasks
+    // el pre-commit (`ktlintFormat`, `ktlintCheck`, `detekt`) falla.
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
+    id("dev.detekt") version "2.0.0-alpha.6"
+    id("com.g16is.conventions.quality") version "1.0.2"
+}
+
+gradle.beforeProject {
+    if (this != rootProject) {
+        pluginManager.apply("com.g16is.conventions.quality")
+        pluginManager.apply("com.g16is.conventions.coverage")
+    }
 }
 
 group = "com.g16is.conventions"
@@ -23,21 +39,39 @@ kotlin {
     jvmToolchain(21)
 }
 
-tasks.processResources {
-    from("hooks") {
-        into("hooks")
+extensions.configure<KtlintExtension> {
+    android.set(false)
+    outputToConsole.set(true)
+    verbose.set(true)
+    coloredOutput.set(true)
+    relative.set(true)
+    // kotlin-dsl mete los accessors generados en el source set main, bajo build/.
+    // ktlint no puede autocorregirlos y ktlintCheck falla siempre.
+    filter {
+        exclude { element ->
+            element.file.invariantSeparatorsPath.contains("/build/")
+        }
     }
 }
 
-publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/G16IS/gradle-conventions")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
+extensions.configure<DetektExtension> {
+    buildUponDefaultConfig.set(true)
+    allRules.set(false)
+    parallel.set(true)
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    jvmTarget.set("21")
+    reports {
+        html.required.set(false)
+        checkstyle.required.set(false)
+        sarif.required.set(false)
+        markdown.required.set(false)
+    }
+}
+
+tasks.processResources {
+    from("hooks") {
+        into("hooks")
     }
 }

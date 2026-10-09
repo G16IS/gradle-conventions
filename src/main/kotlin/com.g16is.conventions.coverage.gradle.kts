@@ -5,9 +5,11 @@ plugins {
     id("org.jetbrains.kotlinx.kover")
 }
 
-val coverageMinBound = providers.gradleProperty("coverage.min")
-    .map { it.toInt() }
-    .orElse(80)
+val coverageMinBound =
+    providers
+        .gradleProperty("coverage.min")
+        .map { it.toInt() }
+        .orElse(80)
 
 extensions.configure<KoverProjectExtension> {
     reports {
@@ -43,8 +45,11 @@ if (project == rootProject) {
 
         moduleReports.set(
             measured.associate { module ->
-                module.name to module.layout.buildDirectory
-                    .file("reports/kover/report.xml").get().asFile.absolutePath
+                module.name to
+                    module.layout.buildDirectory
+                        .file("reports/kover/report.xml")
+                        .get()
+                        .asFile.absolutePath
             },
         )
     }

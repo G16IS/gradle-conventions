@@ -14,62 +14,66 @@ import java.io.File
 import javax.inject.Inject
 
 @UntrackedTask(because = "Writes into the repository's git hooks directory")
-abstract class InstallGitHooks @Inject constructor(
-    private val execOperations: ExecOperations,
-) : DefaultTask() {
+abstract class InstallGitHooks
+    @Inject
+    constructor(
+        private val execOperations: ExecOperations,
+    ) : DefaultTask() {
+        /** Raíz del repo consumidor (donde está el .git). */
+        @get:Internal
+        abstract val repoDirectory: DirectoryProperty
 
-    /** Raíz del repo consumidor (donde está el .git). */
-    @get:Internal
-    abstract val repoDirectory: DirectoryProperty
+        /** Nombres de los hooks bundleados en resources/hooks/ del plugin. */
+        @get:Input
+        abstract val hookNames: ListProperty<String>
 
-    /** Nombres de los hooks bundleados en resources/hooks/ del plugin. */
-    @get:Input
-    abstract val hookNames: ListProperty<String>
-
-    init {
-        group = "build setup"
-        description = "Installs the bundled git hooks into the repository's .git/hooks."
-    }
-
-    @TaskAction
-    fun install() {
-        val root = repoDirectory.get().asFile
-        if (!root.resolve(".git").exists()) {
-            logger.warn("No .git in {}; skipping git hook install", root)
-            return
+        init {
+            group = "build setup"
+            description = "Installs the bundled git hooks into the repository's .git/hooks."
         }
 
-        val hooksDir = resolveHooksDir(root).also { it.mkdirs() }
-
-        hookNames.get().forEach { name ->
-            val bytes = javaClass.classLoader.getResourceAsStream("hooks/$name")
-                ?.use { it.readBytes() }
-                ?: throw GradleException("Missing bundled git hook: hooks/$name")
-
-            val target = File(hooksDir, name)
-            if (target.exists() && target.readBytes().contentEquals(bytes)) {
-                logger.lifecycle("Hook '{}' already up to date.", name)
-            } else {
-                target.writeBytes(bytes)
-                logger.lifecycle("Installed hook '{}' -> {}", name, target)
+        @TaskAction
+        fun install() {
+            val root = repoDirectory.get().asFile
+            if (!root.resolve(".git").exists()) {
+                logger.warn("No .git in {}; skipping git hook install", root)
+                return
             }
-            target.setExecutable(true, false)
-        }
-    }
 
-    // Respeta worktrees, submodules y core.hooksPath.
-    private fun resolveHooksDir(root: File): File {
-        val stdout = ByteArrayOutputStream()
-        val result = execOperations.exec {
-            commandLine("git", "rev-parse", "--git-path", "hooks")
-            workingDir = root
-            standardOutput = stdout
-            errorOutput = ByteArrayOutputStream()
-            isIgnoreExitValue = true
+            val hooksDir = resolveHooksDir(root).also { it.mkdirs() }
+
+            hookNames.get().forEach { name ->
+                val bytes =
+                    javaClass.classLoader
+                        .getResourceAsStream("hooks/$name")
+                        ?.use { it.readBytes() }
+                        ?: throw GradleException("Missing bundled git hook: hooks/$name")
+
+                val target = File(hooksDir, name)
+                if (target.exists() && target.readBytes().contentEquals(bytes)) {
+                    logger.lifecycle("Hook '{}' already up to date.", name)
+                } else {
+                    target.writeBytes(bytes)
+                    logger.lifecycle("Installed hook '{}' -> {}", name, target)
+                }
+                target.setExecutable(true, false)
+            }
         }
-        val path = stdout.toString(Charsets.UTF_8).trim()
-        if (result.exitValue != 0 || path.isEmpty()) return root.resolve(".git/hooks")
-        val f = File(path)
-        return if (f.isAbsolute) f else File(root, path)
+
+        // Respeta worktrees, submodules y core.hooksPath.
+        private fun resolveHooksDir(root: File): File {
+            val stdout = ByteArrayOutputStream()
+            val result =
+                execOperations.exec {
+                    commandLine("git", "rev-parse", "--git-path", "hooks")
+                    workingDir = root
+                    standardOutput = stdout
+                    errorOutput = ByteArrayOutputStream()
+                    isIgnoreExitValue = true
+                }
+            val path = stdout.toString(Charsets.UTF_8).trim()
+            if (result.exitValue != 0 || path.isEmpty()) return root.resolve(".git/hooks")
+            val f = File(path)
+            return if (f.isAbsolute) f else File(root, path)
+        }
     }
-}

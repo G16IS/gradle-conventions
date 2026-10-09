@@ -3,13 +3,25 @@ import dev.detekt.gradle.extensions.DetektExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
-if (project != rootProject) {
-    pluginManager.apply("org.jetbrains.kotlin.jvm")
+val hasCode = project != rootProject || subprojects.isEmpty()
+
+if (hasCode) {
+    val kotlinAlreadyApplied =
+        pluginManager.hasPlugin("org.jetbrains.kotlin.jvm") ||
+            pluginManager.hasPlugin("org.gradle.kotlin.kotlin-dsl")
+
+    if (!kotlinAlreadyApplied) {
+        pluginManager.apply("org.jetbrains.kotlin.jvm")
+        extensions.configure<KotlinJvmProjectExtension> {
+            jvmToolchain(21)
+        }
+    }
+
     pluginManager.apply("org.jlleitschuh.gradle.ktlint")
     pluginManager.apply("dev.detekt")
 
-    extensions.configure<KotlinJvmProjectExtension> {
-        jvmToolchain(21)
+    repositories {
+        mavenCentral()
     }
 
     extensions.configure<KtlintExtension> {
@@ -18,6 +30,13 @@ if (project != rootProject) {
         verbose.set(true)
         coloredOutput.set(true)
         relative.set(true)
+        // Los generados (kotlin-dsl, ksp, kapt) entran al source set bajo build/
+        // y ktlint no puede autocorregirlos.
+        filter {
+            exclude { element ->
+                element.file.invariantSeparatorsPath.contains("/build/")
+            }
+        }
     }
 
     extensions.configure<DetektExtension> {
@@ -42,12 +61,14 @@ if (project != rootProject) {
 }
 
 if (project == rootProject) {
-    if (project == rootProject) {
-        tasks.register<InstallGitHooks>("installGitHooks") {
-            group = "build setup"
-            description = "Installs the repository git hooks if they are not already installed."
-            repoDirectory.convention(layout.projectDirectory)
-            hookNames.convention(listOf("pre-commit", "post-commit"))
-        }
+    tasks.register<InstallGitHooks>("installGitHooks") {
+        group = "build setup"
+        description = "Installs the repository git hooks if they are not already installed."
+        repoDirectory.convention(layout.projectDirectory)
+        hookNames.convention(listOf("pre-commit", "post-commit"))
+    }
+
+    subprojects {
+        pluginManager.apply("com.g16is.conventions.quality")
     }
 }
