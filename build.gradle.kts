@@ -15,7 +15,6 @@ plugins {
 gradle.beforeProject {
     if (this != rootProject) {
         pluginManager.apply("com.g16is.conventions.quality")
-        pluginManager.apply("com.g16is.conventions.coverage")
     }
 }
 
@@ -68,6 +67,13 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
         sarif.required.set(false)
         markdown.required.set(false)
     }
+}
+
+// Sin tests: el post-commit llama coverageReport y no tiene que fallar.
+tasks.register("coverageReport") {
+    group = "verification"
+    description = "No-op. Este repo no mide cobertura."
+    enabled = false
 }
 
 tasks.processResources {
