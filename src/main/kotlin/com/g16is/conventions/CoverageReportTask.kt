@@ -4,9 +4,11 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
+@DisableCachingByDefault(because = "Prints a coverage summary to the console and writes no files")
 abstract class CoverageReportTask : DefaultTask() {
     @get:Input
     abstract val moduleReports: MapProperty<String, String> // módulo -> ruta absoluta a report.xml
