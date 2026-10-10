@@ -73,7 +73,13 @@ jobs:
               run: chmod +x gradlew
 
             - name: Publish packages
-              run: ./gradlew publish -Pversion=${{ steps.resolve-tag.outputs.version }}
+              run: |
+                  set -o pipefail
+                  ./gradlew publish -Pversion=${{ steps.resolve-tag.outputs.version }} --console=plain | tee publish.log
+                  if ! grep -q 'ToGitHubPackagesRepository' publish.log; then
+                    echo "ERROR: publish no subió nada. Faltan las tasks *ToGitHubPackagesRepository (el repositorio Maven no está configurado)."
+                    exit 1
+                  fi
               env:
                   GITHUB_ACTOR: ${{ github.actor }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

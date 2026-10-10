@@ -81,3 +81,19 @@ tasks.processResources {
         into("hooks")
     }
 }
+
+// kotlin-dsl arma las publications (jar + plugin markers). Sin este
+// repositorio, `publish` termina UP-TO-DATE y el workflow queda en verde
+// sin subir nada a GitHub Packages.
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/G16IS/gradle-conventions")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
