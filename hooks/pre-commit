@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 # Pre-commit: formatea, chequea ktlint/detekt, corre tests y build.
-# Solo corre si hay archivos .kt/.kts en el stage. Proyecto multi-módulo.
+# Solo corre si hay archivos .kt/.kts en el stage.
 # Enable: ./gradlew installGitHooks
 # Bypass: git commit --no-verify
 

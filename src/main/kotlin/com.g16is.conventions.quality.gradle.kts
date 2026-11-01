@@ -1,9 +1,10 @@
 import com.g16is.conventions.InstallGitHooks
+import com.g16is.conventions.isMultiModule
 import dev.detekt.gradle.extensions.DetektExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
-val hasCode = project != rootProject || subprojects.isEmpty()
+val hasCode = project != rootProject || !isMultiModule()
 
 if (hasCode) {
     val kotlinAlreadyApplied =

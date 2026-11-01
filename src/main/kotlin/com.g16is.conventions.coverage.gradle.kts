@@ -1,4 +1,5 @@
 import com.g16is.conventions.CoverageReportTask
+import com.g16is.conventions.isMultiModule
 import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 
 plugins {
@@ -20,28 +21,33 @@ extensions.configure<KoverProjectExtension> {
 }
 
 if (project == rootProject) {
-    subprojects {
-        pluginManager.apply("org.jetbrains.kotlinx.kover")
+    val multiModule = isMultiModule()
 
-        extensions.configure<KoverProjectExtension> {
-            reports {
-                verify {
-                    rule { minBound(coverageMinBound.get()) }
+    if (multiModule) {
+        subprojects {
+            pluginManager.apply("org.jetbrains.kotlinx.kover")
+
+            extensions.configure<KoverProjectExtension> {
+                reports {
+                    verify {
+                        rule { minBound(coverageMinBound.get()) }
+                    }
                 }
             }
-        }
 
-        rootProject.dependencies
-            .add("kover", this)
+            rootProject.dependencies
+                .add("kover", this)
+        }
     }
 
-    val measured = subprojects
+    // Single-module: el root tiene el código y se mide a sí mismo.
+    val measured = if (multiModule) subprojects.toList() else listOf(project)
 
     tasks.register<CoverageReportTask>("coverageReport") {
         group = "verification"
         description = "Resumen de cobertura por módulo"
 
-        dependsOn(measured.map { "${it.path}:koverXmlReport" })
+        dependsOn(measured.map { "${it.path.removeSuffix(":")}:koverXmlReport" })
 
         moduleReports.set(
             measured.associate { module ->
@@ -58,6 +64,6 @@ if (project == rootProject) {
         group = "verification"
         description = "koverVerify en todos los subproyectos"
 
-        dependsOn(measured.map { "${it.path}:koverVerify" })
+        dependsOn(measured.map { "${it.path.removeSuffix(":")}:koverVerify" })
     }
 }

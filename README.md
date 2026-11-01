@@ -59,6 +59,16 @@ plugins {
 }
 ```
 
+### Single-module vs multi-módulo
+
+Se detecta solo: si el build tiene subproyectos (`include(...)` en `settings.gradle.kts`) es multi-módulo y quality/coverage se aplican a cada subproyecto; si no, se aplican al root, que es el que tiene el código. `coverageReport` y `verifyAllCoverage` funcionan en ambos casos.
+
+Para forzarlo (por ejemplo, un root con código **y** subproyectos), en `gradle.properties`:
+
+```properties
+conventions.multiModule=false
+```
+
 El plugin `publishing` lee el destino de Packages desde propiedades (no hardcodea un repo):
 
 - `gpr.repository=OWNER/REPO`, o
